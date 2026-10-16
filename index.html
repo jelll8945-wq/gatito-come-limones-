@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Gatito Comilón</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0e68c;
+            margin: 0;
+            padding: 10px;
+            touch-action: manipulation;
+        }
+        #game-board {
+            width: 320px;
+            height: 400px;
+            background-color: #e0ffff;
+            border: 3px solid #333;
+            border-radius: 10px;
+            margin: 10px auto;
+            position: relative;
+            overflow: hidden;
+        }
+        #cat {
+            font-size: 40px;
+            position: absolute;
+            bottom: 10px;
+            left: 140px;
+            transition: left 0.1s ease;
+        }
+        .fruit {
+            font-size: 30px;
+            position: absolute;
+        }
+        .stats {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .controls {
+            margin-top: 15px;
+        }
+        button {
+            font-size: 20px;
+            padding: 15px 30px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            background-color: #ff69b4;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #reset-btn {
+            display: none;
+            background-color: #32cd32;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🐱 Gatito Comilón 🍎</h2>
+    
+    <div class="stats">
+        <span>Puntos: <span id="score">0</span></span> | 
+        <span>Tiempo: <span id="timer">15</span>s</span>
+    </div>
+
+    <div id="game-board">
+        <div id="cat">🐱</div>
+    </div>
+
+    <div class="controls">
+        <button onclick="moveCat(-30)">⬅️ Izquierda</button>
+        <button onclick="moveCat(30)">Derecha ➡️</button>
+    </div>
+
+    <button id="reset-btn" onclick="startGame()">🔄 Reiniciar Juego</button>
+
+    <script>
+        const board = document.getElementById("game-board");
+        const cat = document.getElementById("cat");
+        const scoreEl = document.getElementById("score");
+        const timerEl = document.getElementById("timer");
+        const resetBtn = document.getElementById("reset-btn");
+
+        let score = 0;
+        let timeLeft = 15;
+        let catX = 140;
+        let gameInterval, timerInterval, spawnInterval;
+        let fruits = [];
+
+        function startGame() {
+            score = 0;
+            timeLeft = 15;
+            catX = 140;
+            scoreEl.innerText = score;
+            timerEl.innerText = timeLeft;
+            resetBtn.style.display = "none";
+            
+            // Limpiar frutas anteriores
+            fruits.forEach(f => f.element.remove());
+            fruits = [];
+
+            cat.style.left = catX + "px";
+
+            // Iniciar bucles de juego
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            clearInterval(spawnInterval);
+
+            timerInterval = setInterval(updateTimer, 1000);
+            gameInterval = setInterval(updateGame, 50);
+            spawnInterval = setInterval(spawnFruit, 1000);
+        }
+
+        function moveCat(dir) {
+            catX += dir;
+            if (catX < 0) catX = 0;
+            if (catX > 270) catX = 270;
+            cat.style.left = catX + "px";
+        }
+
+        function spawnFruit() {
+            const fruitTypes = ["🍎", "🍌", "🍓", "🍇", "🍊"];
+            const fruitEl = document.createElement("div");
+            fruitEl.classList.add("fruit");
+            fruitEl.innerText = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+            
+            let posX = Math.floor(Math.random() * 280);
+            fruitEl.style.left = posX + "px";
+            fruitEl.style.top = "0px";
+            board.appendChild(fruitEl);
+
+            fruits.push({ element: fruitEl, x: posX, y: 0 });
+        }
+
+        function updateGame() {
+            for (let i = 0; i < fruits.length; i++) {
+                let f = fruits[i];
+                f.y += 5; // Velocidad de caída
+                f.element.style.top = f.y + "px";
+
+                // Colisión con el gato
+                if (f.y >= 340 && f.y <= 380 && Math.abs(f.x - catX) < 30) {
+                    score += 10;
+                    scoreEl.innerText = score;
+                    f.element.remove();
+                    fruits.splice(i, 1);
+                    i--;
+
+                    // Si atrapa fruta, le sumamos 1 segundo extra
+                    timeLeft += 1;
+                    timerEl.innerText = timeLeft;
+                } 
+                // Eliminar fruta si cae al suelo
+                else if (f.y > 400) {
+                    f.element.remove();
+                    fruits.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerEl.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            clearInterval(timerInterval);
+            clearInterval(spawnInterval);
+            alert("¡Tiempo agotado! Puntuación final: " + score);
+            resetBtn.style.display = "inline-block";
+        }
+
+        // Arrancar juego al cargar
+        startGame();
+    </script>
+</body>
+</html>
